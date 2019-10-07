@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<head lang="ja">
+    <meta charset="UTF-8">
+    <title>テスト画像つくーる</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <div class="content m-md-3">
+            <h1>テスト画像つくーる</h1>
+            <div class="row">
+                <div class="main col-md-4">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <label>
+                                <input type="file" name="org_img_file" class="d-none">
+                                <img src="https://placehold.jp/200x200.png?text=リサイズ前" id="org_img" class="border"
+                                    style="max-width: 200px;max-height: 200px;">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <img src="https://placehold.jp/200x200.png?text=リサイズ後" id="resize_img" class="border"
+                                style="max-width: 200px;max-height: 200px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="left-side col-md-4">
+                    <div id="accordion">
+                        <div class="form-group form-check">
+                            <input type="radio" name="format_type" class="form-check-input" id="format_type_1" value="1"
+                                checked data-toggle="collapse" data-target="#collapse1:not(.show)"
+                                data-parent="#accordion">
+                            <label class="form-check-label" for="format_type_1">倍率で変換する</label>
+                        </div>
+                        <div class="form-group row collapse show" id="collapse1" aria-expanded="true"
+                            data-parent="#accordion">
+                            <label class="col-form-label col-md-4">倍率</label>
+                            <input type="text" name="convert_rat" class="form-control col-md-6" value="1.0">
+                            <label class="col-form-label col-md-2">倍</label>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="radio" name="format_type" class="form-check-input" id="format_type_2" value="2"
+                                data-toggle="collapse" data-target="#collapse2:not(.show)" data-parent="#accordion">
+                            <label class="form-check-label" for="format_type_2">ファイルサイズで変換する</label>
+                        </div>
+                        <div class="form-group row collapse" id="collapse2" data-parent="#accordion">
+                            <label class="col-form-label col-md-4">ファイルサイズ</label>
+                            <input type="text" name="convert_file_size" class="form-control col-md-6" value="1000">
+                            <label class="col-form-label col-md-2">KB</label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-form-label col-md-4">画像タイプ</label>
+                        <div class="col-md-6">
+                            <select name="mime_type" class="form-control">
+                                <option value="image/jpeg" selected>image/jpeg</option>
+                                <option value="image/png">image/png</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <small>※変換できる画像の最大幅（たてよこ）は16,384pxです</small>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-11 text-right">
+                            <input type="button" id="img_convert_btn" class="btn btn-primary" value="画像生成する！">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script>
+        $(function () {
+
+            MAX_WIDTH = 16384
+            MAX_HEIGHT = 16384
+
+            $('input[name="org_img_file"]').change(function (ev) {
+                var orgImgFile = document.querySelector('input[name="org_img_file"]').files[0]
+                if (orgImgFile) {
+                    var fr = new FileReader()
+                    fr.readAsDataURL(orgImgFile)
+                    fr.onload = function (ev) {
+                        var dataUrl = fr.result
+                        $('#org_img').attr('src', dataUrl)
+                    };
+                }
+            });
+
+            $('#img_convert_btn').click(function (ev) {
+                $('#img_convert_btn').attr('disabled', true)
+
+                var orgImgFile = document.querySelector('input[name="org_img_file"]').files[0]
+                var formatType = $('input[name="format_type"]:checked').val()
+                var convertRat = $('input[name="convert_rat"]').val() || 0
+                var convertfileSize = parseInt($('input[name="convert_file_size"]').val()) * 1000 || 0 // バイトで計算
+                var mimeType = $('select[name="mime_type"]').val()
+
+                var errors = [];
+                if (!orgImgFile) {
+                    errors.push('画像が選択されていません')
+                }
+                if (formatType == 1) { // 倍率
+                    if (convertRat <= 0) {
+                        errors.push('倍率を入力してください')
+                    }
+                } else if (formatType == 2) { // ファイルサイズ
+                    if (convertfileSize <= 0) {
+                        errors.push('ファイルサイズを入力してください')
+                    }
+                }
+
+                if (errors.length >= 1) {
+                    alert(errors.join('\n'));
+                    $('#img_convert_btn').attr('disabled', false)
+                    return
+                }
+
+                var blobUrl = window.URL.createObjectURL(orgImgFile)
+                var img = document.createElement('img')
+                $(img).attr("src", blobUrl).bind('load', function (ev) {
+                    var orgBlob = base64ToBlob(ImageToBase64(img, mimeType))
+
+                    if (formatType == 1) { // 倍率
+                        var base64 = ImageToBase64(img, mimeType, convertRat)
+                        $('#resize_img').attr('src', base64)
+                        $('#img_convert_btn').attr('disabled', false)
+
+                    } else if (formatType == 2) { // ファイルサイズ
+
+                        if (convertfileSize > orgBlob.size) {
+                            alert('変換前の画像ファイルサイズが小さいです')
+                            $('#img_convert_btn').attr('disabled', false)
+                            return
+                        }
+
+                        var ratio = Math.sqrt(convertfileSize / orgBlob.size) // a^2 = Z / Z'
+                        ratio = Math.round(ratio * 100) / 100 // 少数第2位まで
+                        for (var i = 1; i <= 40; i++) {
+                            var rat = ratio * (80 + i) / 100
+                            var base64 = ImageToBase64(img, mimeType, rat);
+                            var blob = base64ToBlob(base64);
+                            if (convertfileSize <= blob.size) {
+                                $('#resize_img').attr('src', base64)
+                                $('#img_convert_btn').attr('disabled', false)
+                                break;
+                            }
+                        }
+                    }
+                });
+            });
+
+            //=====================================================
+            // <img>要素 → Base64形式の文字列に変換
+            //   img       : HTMLImageElement
+            //   mime_type : string "image/png", "image/jpeg" など
+            //   ratio     : int 比率
+            //=====================================================
+            function ImageToBase64(img, mime_type, ratio = 1) {
+                // New Canvas
+                var canvas = document.createElement('canvas');
+                var dWidth = img.width * ratio
+                var dHeight = img.height * ratio
+
+                if (dWidth > MAX_WIDTH) {
+                    dWidth = MAX_WIDTH
+                }
+                if (dHeight > MAX_HEIGHT) {
+                    dHeight = MAX_HEIGHT
+                }
+
+                canvas.width = dWidth;
+                canvas.height = dHeight;
+                // Draw Image
+                var ctx = canvas.getContext('2d');
+                // Maximum height/width: 32,767 pixels
+                // Maximum area: 268,435,456 pixels (e.g., 16,384 x 16,384)
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, dWidth, dHeight);
+                // To Base64
+                return canvas.toDataURL(mime_type, 1.00);
+            }
+            // 引数のBase64の文字列をBlob形式にする
+            function base64ToBlob(base64) {
+                var base64Data = base64.split(',')[1], // Data URLからBase64のデータ部分のみを取得
+                    data = window.atob(base64Data), // base64形式の文字列をデコード
+                    buff = new ArrayBuffer(data.length),
+                    arr = new Uint8Array(buff),
+                    blob,
+                    i,
+                    dataLen;
+                // blobの生成
+                for (i = 0, dataLen = data.length; i < dataLen; i++) {
+                    arr[i] = data.charCodeAt(i);
+                }
+                blob = new Blob([arr], { type: 'image/jpeg' });
+                return blob;
+            }
+        });
+    </script>
+</body>
