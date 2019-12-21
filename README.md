@@ -1,7 +1,3 @@
-# test_image
-テスト画像ツクール
-https://okdyy75.github.io/test_image/
-
 ## 概要
 画像を指定の倍率、容量に変換する画像ツールです
 
